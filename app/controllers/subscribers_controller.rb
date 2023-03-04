@@ -1,61 +1,43 @@
-# frozen_string_literal: true
-
 class SubscribersController < ApplicationController
   include PaginationMethods
 
-  ##
-  # GET /api/subscribers
-  def index
-    subscribers = [
-      {
-        id: 1,
-        name: "Rick Sanchez",
-        email: "rickc137@citadel.com",
-        status: "active"
-      },
-      {
-        id: 2,
-        name: "Morty Smith",
-        email: "morty.smith@gmail.com",
-        status: "inactive"
-      },
-      {
-        id: 3,
-        name: "Jerry Smith",
-        email: "jerry.smith@aol.com",
-        status: "active"
-      },
-      {
-        id: 4,
-        name: "Beth Smith",
-        email: "beth.smith@gmail.com",
-        status: "active"
-      },
-      {
-        id: 5,
-        name: "Summer Smith",
-        email: "summer.smith@gmail.com",
-        status: "active"
-      },
-      {
-        id: 6,
-        name: "Bird Person",
-        email: "bird.person@birdworld.com",
-        status: "active"
-      }
-    ]
+  before_action :set_subscriber, only: [:show, :update, :destroy]
 
-    total_records = subscribers.count
-    limited_subscribers = subscribers[offset..limit]
+  def index
+    @subscribers = Subscriber.all.order(:id)
+
+    total_records = @subscribers.count
+    limited_subscribers = @subscribers[offset...limit * page]
 
     render json: {subscribers: limited_subscribers, pagination: pagination(total_records)}, formats: :json
   end
 
   def create
-    render json: {message: "Subscriber created successfully"}, formats: :json, status: :created
+    @subscriber = Subscriber.new(subscriber_params)
+
+    if @subscriber.save
+      render json: {message: "Subscriber created successfully"}, formats: :json, status: :created
+    else
+      render json: {message: @subscriber.errors.messages.to_s}, status: :unprocessable_entity
+    end
   end
 
   def update
-    render json: {message: "Subscriber updated successfully"}, formats: :json, status: :ok
+    if @subscriber.update(subscriber_params)
+      render json: {message: "Subscriber updated successfully"}, formats: :json, status: :ok
+    else
+      render json: {message: @subscriber.errors.messages.to_s}, status: :unprocessable_entity
+    end
+  end
+
+  private
+
+  def set_subscriber
+    @subscriber = Subscriber.find(params[:id])
+  end
+
+  def subscriber_params
+    params.permit(:name, :email, :status)
+    # params.require(:subscriber).permit(:name, :email, :status)
   end
 end
