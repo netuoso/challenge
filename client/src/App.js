@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useQueryParam, NumberParam, withDefault } from 'use-query-params';
+import toast, { Toaster } from 'react-hot-toast';
 
 import { SecondaryButton } from './components/Button'
 import AddSubscriberModal from './components/AddSubscriberModal'
@@ -72,6 +73,12 @@ function App() {
 
   const onSuccessAddSubscriber = () => {
     setShowAddModal(false)
+    refreshSubscribers();
+  }
+
+  const onErrorAddSubscriber = (error) => {
+    setShowAddModal(false);
+    toast.error(error)
   }
 
   const onUpdateStatusSelectected = (subscriberId, status) => {
@@ -87,32 +94,41 @@ function App() {
   const onSuccessUpdateStatusSubscriber = () => {
     setFocusedSubscriberId('')
     setFocusedSubscriberStatus('')
+    refreshSubscribers();
+  }
+
+  const onErrorUpdateStatusSubscriber = (error) => {
+    toast.error(error)
   }
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900">
+      <div><Toaster position="top-right"/></div>
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
         <AddSubscriberModal
           isOpen={showAddModal}
           onClose={onCloseAddSubscriberModal}
           onSuccess={onSuccessAddSubscriber}
+          onError={onErrorAddSubscriber}
         />
         <SubscriberStatusModal
           isOpen={focusedSubscriberId !== '' && focusedSubscriberStatus !== ''}
           onClose={onCloseUpdateStatusSubscriberModal}
           onSuccess={onSuccessUpdateStatusSubscriber}
+          onError={onErrorUpdateStatusSubscriber}
           subscriberId={focusedSubscriberId}
           status={focusedSubscriberStatus}
         />
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-semibold flex items-center">
-            {pagination?.total} Subscribers {isLoading && <LoadingSpinner className="ml-4" />}
+            Showing {Math.min(pagination?.page * pagination?.per_page, pagination?.total)} of {pagination?.total} Subscribers {isLoading && <LoadingSpinner className="ml-4" />}
           </h1>
           <SecondaryButton onClick={onOpenAddSubscriber}>
             Add Subscriber
           </SecondaryButton>
         </div>
         <div className="mt-6">
+          <TablePagination pagination={pagination} onPageSelected={onPageSelected} />
           <SubscriberTable
             subscribers={subscribers}
             onChangeStatusSelected={onUpdateStatusSelectected}
